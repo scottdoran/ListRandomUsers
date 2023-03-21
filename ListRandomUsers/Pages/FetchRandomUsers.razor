@@ -1,0 +1,68 @@
+﻿@page "/FetchRandomUsers"
+@inject HttpClient Http
+@using System.Text.Json;
+@using System.Text.Json.Serialization;
+@using ListRandomUsers.Data;
+@using ListRandomUsers.Helpers;
+
+<h3>Random Users</h3>
+
+@if (randomuser == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <p>This component calls the https://randomuser.me/api/ API and outputs the first 5 “random users” that the API calls return</p>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Title</th>
+                <th>First Name</th>
+                <th>Surname</th>
+                <th>Age</th>
+                <th>Country</th>
+                <th>Latitude</th>
+                <th>Longitude</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var user in randomuser.Results)
+            {
+                <tr>
+                    <td>@user.Name.Title</td>
+                    <td>@user.Name.First</td>
+                    <td>@user.Name.Last</td>
+                    <td>@user.Dob.Age</td>
+                    <td>@user.Location.Country</td>
+                    <td>@user.Location.Coordinates.Latitude</td>
+                    <td>@user.Location.Coordinates.Latitude</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private RandomUser? randomuser;
+
+    HttpRequestMessage requestMessage;
+    HttpResponseMessage responseMessage;
+    HttpClient http;
+
+    protected override async Task OnInitializedAsync()
+    {
+            http = new HttpClient();
+            requestMessage = new HttpRequestMessage
+                {
+                    Method = HttpMethod.Get,
+                    RequestUri = new Uri(@"https://randomuser.me/api/?results=5")
+
+                };
+            responseMessage = await http.SendAsync(requestMessage);
+            var serializeOptions = new JsonSerializerOptions();
+            serializeOptions.Converters.Add(new StringConverter());
+            randomuser = JsonSerializer.Deserialize<RandomUser>(await responseMessage.Content.ReadAsStringAsync(), serializeOptions);
+    }
+}
